@@ -1,105 +1,118 @@
-# YT Audio Browser (CLAP, Windows)
+# YT Audio Browser
 
-A CLAP effect plugin whose window searches several sites through yt-dlp, downloads
-the audio, and lets you drag the file straight into your DAW. Audio passes through
+A Windows CLAP plugin that searches YouTube, SoundCloud, Bandcamp and more through
+[yt-dlp](https://github.com/yt-dlp/yt-dlp), downloads audio in your chosen format, and lets you
+drag the files straight into your DAW.
+
+## Download
+
+**[Get the latest release](../../releases/latest)** (currently 0.1.0, an early release).
+
+Pick one installer from the release page:
+
+- `YtAudioBrowser-Setup-Slim.exe` is small and downloads yt-dlp, ffmpeg and deno (about 150 MB)
+  while installing.
+- `YtAudioBrowser-Setup.exe` has the tools bundled and installs offline.
+
+Then rescan plugins in your DAW and add **YT Audio Browser** to a track. Audio passes through
 the plugin unchanged; it exists for its window.
 
-## Build
+Requires Windows 10 or 11 (64-bit), a DAW that hosts CLAP plugins with embedded Windows GUIs,
+and an internet connection.
 
-Needs Visual Studio 2022 (or any C++17 compiler) and CMake 3.20+. CLAP headers and
-clap-helpers are fetched by CMake.
+## Features
 
-```powershell
-cmake -S . -B build -A x64
-cmake --build build --config Release
-.\scripts\install.ps1
-```
+- **Search nine sites at once:** YouTube, YouTube Music, SoundCloud, Bandcamp (tracks),
+  Mixcloud, Internet Archive, Dailymotion, Niconico and Bilibili. Paste any URL yt-dlp
+  supports to list or download it.
+- **Download as flac (default), wav, mp3, m4a or opus.** Select several results and they
+  download one after another into `Music\YtAudioBrowser`.
+- **Drag into your DAW** from the Downloads list, one file or many.
+- **Explorer-style lists:** Shift/Ctrl selection, Ctrl+A, Ctrl+C, Enter, Delete, right-click
+  menus (Copy link, Open in browser, Open, Delete to the Recycle Bin).
+- **Click any column header to sort** ascending, descending, then back to default.
+- **Remembers** ticked sites, format, sort orders and column widths.
+- **Refresh** re-runs the last search, **Stop** cancels, **Update yt-dlp** fixes most
+  "site stopped working" problems.
 
-`install.ps1` copies `YtAudioBrowser.clap` to `%LOCALAPPDATA%\Programs\Common\CLAP`
-and runs `fetch-tools.ps1` if the tools are missing. Rescan plugins in the DAW.
+## Using it
 
-## Installer
+1. Type a query and press Enter. YouTube and SoundCloud are ticked by default; tick more sites
+   as needed.
+2. Select one or more results and press **Download selected** (or double-click one).
+3. Drag the finished file from the Downloads list into your arrangement or sampler.
 
-`scripts\build-installer.ps1` builds the plugin, downloads the tools and produces
-`dist\YtAudioBrowser-Setup.exe` with NSIS (`winget install NSIS.NSIS`); add `-Slim` for a
-small installer that downloads the tools when it runs. Per-user, no admin needed.
+Right-click a result for **Copy link** and **Open in browser**. Right-click a download for
+**Open** (your default audio app) and **Delete**.
 
-The installer has two folder pages:
+## Installing
 
-- **Tools folder** (default `%LOCALAPPDATA%\YtAudioBrowser`): yt-dlp, ffmpeg, deno in its
-  `bin` subfolder, plus the uninstaller. Pick a folder you can write to; yt-dlp updates
-  itself there. The choice is saved under `HKCU\Software\YtAudioBrowser\ToolsDir`, which
-  is how the plugin finds the tools.
-- **Plugin folder** (default `%LOCALAPPDATA%\Programs\Common\CLAP`): if you change it,
-  add the new folder to your DAW's CLAP search paths.
+No admin rights needed. The installer asks for two folders:
+
+- **Tools folder** (default `%LOCALAPPDATA%\YtAudioBrowser`): yt-dlp, ffmpeg, deno and the
+  uninstaller. yt-dlp updates itself here, so pick a folder you can write to.
+- **Plugin folder** (default `%LOCALAPPDATA%\Programs\Common\CLAP`, which most DAWs already scan):
+  if you change it, add the new folder to your DAW's CLAP search paths.
 
 Reinstalling starts from the folders you chose last time. Silent install:
 `Setup.exe /S /PLUGINDIR=D:\Plugins\CLAP /D=D:\Tools\YtAudioBrowser` (`/D=` must be last).
 
-Uninstall from Apps & features; it removes only the files it installed, and downloaded
-audio is kept. Close your DAW before reinstalling, since a loaded .clap is locked.
+Close your DAW before reinstalling, since a loaded plugin file is locked. Uninstall from
+Apps & features; your downloaded audio is kept.
 
-## Building on GitHub
+## Known limitations
 
-`.github/workflows/build.yml` builds on a Windows runner with MSVC and uploads the plugin
-and both installers as artifacts on every push. The first run is the first time this code
-is built with MSVC (it was only cross-compiled with MinGW), so expect to fix a compile
-error or two.
-
-## Tools
-
-`fetch-tools.ps1` puts yt-dlp.exe, ffmpeg.exe, ffprobe.exe and deno.exe in
-`%LOCALAPPDATA%\YtAudioBrowser\bin`. The plugin also looks in a `tools` folder next to
-the .clap file. YouTube needs yt-dlp plus a JavaScript runtime (deno), and sites change
-often, so use the **Update yt-dlp** button when a search or download starts failing.
-
-## Use
-
-- Type a query and press Enter. Ticked sites are searched in parallel. YouTube and
-  SoundCloud are on by default; tick more as needed:
-  - Through yt-dlp: YouTube, YouTube Music, SoundCloud, Dailymotion, Niconico, Bilibili.
-  - Built in (the plugin queries them itself, then yt-dlp downloads): Bandcamp (tracks
-    only), Mixcloud, Internet Archive (audio items).
-  - To add a yt-dlp site, add a row to `sites()` in `src/search.cpp`: a `<key>search`
-    prefix or a search-page URL that yt-dlp has an extractor for (`yt-dlp --list-extractors`).
-- Paste any URL yt-dlp supports to list or download it (this is how you reach Bandcamp,
-  Vimeo and the rest; yt-dlp has no search prefix for them).
-- **Refresh** (next to Stop) re-runs the last search with the same sites and re-reads the
-  downloads folder, so files added or removed outside the plugin show up.
-- Click a column header to sort either list (ascending, then descending, then back to the
-  default order: results as found, downloads newest first). The arrow shows the sorted
-  column. Text sorts case-insensitively with numbers in order; unknown lengths always sort last.
-- The plugin remembers ticked sites, format, both sort orders and column widths in
-  `%LOCALAPPDATA%\YtAudioBrowser\settings.ini`. The last query is not remembered.
-- Both lists work like Explorer: click, Shift+click for a range, Ctrl+click to add or
-  remove single rows, Ctrl+A for all.
-- Results: double-click or **Download selected** downloads every selected result, one
-  after another, in the format picked at the top (flac by default). Right-click (or the
-  menu key) for **Copy link(s)** and **Open in browser**; Ctrl+C also copies links.
-- Downloads (bottom list): drag the selection into your DAW. Double-click or right-click
-  > **Open** opens files in your default audio app; right-click > **Delete** (or the
-  Delete key) moves them to the Recycle Bin.
-- Files land in `%USERPROFILE%\Music\YtAudioBrowser`.
-
-## Status and limits
-
-- Compiles and links as a Windows x64 DLL exporting `clap_entry` (cross-compiled with
-  zig/mingw for the check). **Not run inside a DAW and not run against live sites**: the
-  build sandbox had no access to them. Expect small fixes on first run.
-- The three built-in searches (Bandcamp, Mixcloud, Internet Archive) parse sample
-  responses correctly in tests but were not run against the live sites. Bandcamp reads
-  its search page HTML, so it breaks whenever Bandcamp changes the page; if a site fails
-  the status line names it while the others still show results.
+- Early release: built and checked against sample data, but not yet tested across DAWs or every
+  site. Expect rough edges.
+- Windows only. The window is embedded only and fixed size.
+- Dragging files out depends on your DAW. Some hosts do not accept a file drag from a plugin
+  window, and some capture keystrokes so typing in the search box may not work. If a drag fails,
+  use **Open folder** and drag from there.
+- Bandcamp search reads Bandcamp's web page, so it breaks when the layout changes. If a site
+  fails, the status line names it and the others keep working.
 - Internet Archive items with several files download only the first file.
-- yt-dlp has no search for Spotify, Apple Music or Deezer, and they are DRM-protected,
-  so they are not supported.
-- Embedded window only (no floating window), fixed size, classic control styling.
-- Drag-out uses a standard Windows file drag. Hosts differ in whether they accept it
-  from a plugin window; Reaper and Bitwig are the likeliest to work.
-- Some hosts intercept keyboard input in plugin windows, which can swallow typing in
-  the search box.
-- Download and conversion progress comes from yt-dlp's output; if it changes its output
-  format the bar may stop moving while the download still works.
-- Downloading content you do not have the rights to use is your responsibility.
-- Bundled tools keep their own licenses (yt-dlp: Unlicense, ffmpeg LGPL build, deno: MIT).
-  Check them before redistributing the plugin with the tools included.
+- No preview before download and no search filters beyond sorting.
+- Spotify, Apple Music and Deezer are not supported: yt-dlp cannot search them and their audio
+  is DRM-protected.
+- Sites change often. If downloads start failing, press **Update yt-dlp** first.
+
+## Legal
+
+You are responsible for having the right to download and use what you fetch. Many sites restrict
+downloading in their terms, and most music is copyrighted. Internet Archive and Creative Commons
+material is the safest source for anything you plan to release.
+
+The installer includes yt-dlp (Unlicense), an LGPL build of ffmpeg and deno (MIT), each under its
+own license. Check them before redistributing the plugin with the tools included.
+
+## Building from source
+
+Needs Visual Studio 2022 (or any C++17 compiler) and CMake 3.20+. CLAP headers and clap-helpers
+are fetched by CMake.
+
+```powershell
+cmake -S . -B build -A x64
+cmake --build build --config Release
+.\scripts\install.ps1          # copies the plugin to your CLAP folder and fetches the tools
+```
+
+To build the installers, install NSIS (`winget install NSIS.NSIS`) and run:
+
+```powershell
+.\scripts\build-installer.ps1          # dist\YtAudioBrowser-Setup.exe (tools bundled)
+.\scripts\build-installer.ps1 -Slim    # dist\YtAudioBrowser-Setup-Slim.exe
+```
+
+`.github/workflows/build.yml` does the same on a Windows runner and uploads the plugin and both
+installers as artifacts on every push.
+
+### How it works
+
+- The plugin looks for `yt-dlp.exe` in the folder the installer recorded under
+  `HKCU\Software\YtAudioBrowser\ToolsDir`, then `%LOCALAPPDATA%\YtAudioBrowser\bin`, then a
+  `tools` folder next to the `.clap`. `scripts\fetch-tools.ps1` downloads the tools.
+- YouTube needs yt-dlp plus a JavaScript runtime (deno).
+- Settings live in `%LOCALAPPDATA%\YtAudioBrowser\settings.ini`.
+- Sites are defined in `sites()` in `src/search.cpp`. yt-dlp sites are a `<key>search` prefix or
+  a search-page URL that yt-dlp has an extractor for (`yt-dlp --list-extractors`). Bandcamp,
+  Mixcloud and Internet Archive have built-in providers in `src/providers.cpp`.
