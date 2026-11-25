@@ -1,0 +1,38 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build plugin
+        run: |
+          cmake -S . -B build -A x64
+          cmake --build build --config Release
+
+      - name: Install NSIS
+        run: choco install nsis -y --no-progress
+
+      # build-installer.ps1 builds the plugin again (a no-op here) and writes
+      # dist\YtAudioBrowser-Setup.exe (tools bundled) or ...-Slim.exe (-Slim).
+      - name: Build installers
+        shell: pwsh
+        run: |
+          ./scripts/build-installer.ps1 -Slim
+          ./scripts/build-installer.ps1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: YtAudioBrowser-plugin
+          path: build/Release/YtAudioBrowser.clap
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: YtAudioBrowser-installers
+          path: dist/*.exe
