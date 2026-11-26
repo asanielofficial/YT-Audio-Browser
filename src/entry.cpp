@@ -1,5 +1,7 @@
-#include "gui.h"
 #include "plugin.h"
+#ifdef _WIN32
+#include "gui.h"
+#endif
 
 #include <clap/clap.h>
 
@@ -25,7 +27,11 @@ const clap_plugin_t *factoryCreate(const clap_plugin_factory_t *, const clap_hos
 const clap_plugin_factory_t kFactory = {factoryCount, factoryDescriptor, factoryCreate};
 
 bool entryInit(const char *) { return true; }
-void entryDeinit() { ytb::Gui::unregisterWindowClass(); }
+void entryDeinit() {
+#ifdef _WIN32
+   ytb::Gui::unregisterWindowClass();
+#endif
+}
 
 const void *entryGetFactory(const char *id) {
    return std::strcmp(id, CLAP_PLUGIN_FACTORY_ID) == 0 ? &kFactory : nullptr;

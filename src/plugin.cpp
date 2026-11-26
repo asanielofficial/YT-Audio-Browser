@@ -1,6 +1,10 @@
 #include "plugin.h"
 
+#ifdef _WIN32
 #include "gui.h"
+#else
+#include "gui_gtk.h"
+#endif
 
 #include <clap/helpers/host-proxy.hxx>
 #include <clap/helpers/plugin.hh>
@@ -22,7 +26,7 @@ const clap_plugin_descriptor_t kDescriptor = {
     "https://github.com/yt-dlp/yt-dlp",
     "",
     "",
-    "0.1.0",
+    "1.0.0",
     "Search several sites with yt-dlp, download audio, drag it into your DAW.",
     kFeatures};
 
@@ -68,6 +72,8 @@ class YtAudioBrowser final : public Base {
       return CLAP_PROCESS_CONTINUE;
    }
 
+#ifdef _WIN32
+   // ---- Windows: embedded child window --------------------------------------
    bool implementsGui() const noexcept override { return true; }
    bool guiIsApiSupported(const char *api, bool isFloating) noexcept override {
       return !isFloating && std::strcmp(api, CLAP_WINDOW_API_WIN32) == 0;
@@ -110,6 +116,75 @@ class YtAudioBrowser final : public Base {
 
  private:
    std::unique_ptr<Gui> _gui;
+#else
+   // ---- Linux: floating GTK window, pumped from the host's timer ------------
+   // GTK cannot embed into a host-provided X11 window, so the window floats and
+   // the host marks it as belonging to its own window (set_transient).
+   bool implementsGui() const noexcept override { return true; }
+   bool guiIsApiSupported(const char *api, bool isFloating) noexcept override {
+      return isFloating && std::strcmp(api, CLAP_WINDOW_API_X11) == 0;
+   }
+   bool guiGetPreferredApi(const char **api, bool *isFloating) noexcept override {
+      *api = CLAP_WINDOW_API_X11;
+      *isFloating = true;
+      return true;
+   }
+   bool guiCreate(const char *api, bool isFloating) noexcept override {
+      if (!guiIsApiSupported(api, isFloating) || !_host.canUseTimerSupport())
+         return false;
+      _gui = std::make_unique<GtkGui>([this] {
+         // The user closed the window with the window manager's button.
+         if (_host.canUseGui())
+            _host.guiClosed(false);
+      });
+      if (!_gui->create()) {
+         _gui.reset();
+         return false;
+      }
+      if (!_host.timerSupportRegister(20, &_timer)) {
+         _gui.reset();
+         return false;
+      }
+      return true;
+   }
+   void guiDestroy() noexcept override {
+      if (_timer != CLAP_INVALID_ID) {
+         _host.timerSupportUnregister(_timer);
+         _timer = CLAP_INVALID_ID;
+      }
+      _gui.reset();
+   }
+   bool guiSetScale(double) noexcept override { return false; }
+   bool guiCanResize() const noexcept override { return false; }
+   bool guiSetTransient(const clap_window *window) noexcept override {
+      return _gui && window && _gui->setTransient(static_cast<unsigned long>(window->x11));
+   }
+   void guiSuggestTitle(const char *title) noexcept override {
+      if (_gui && title)
+         _gui->setTitle(title);
+   }
+   bool guiShow() noexcept override {
+      if (!_gui)
+         return false;
+      _gui->show();
+      return true;
+   }
+   bool guiHide() noexcept override {
+      if (!_gui)
+         return false;
+      _gui->hide();
+      return true;
+   }
+   bool implementsTimerSupport() const noexcept override { return true; }
+   void onTimer(clap_id id) noexcept override {
+      if (id == _timer && _gui)
+         _gui->pump();
+   }
+
+ private:
+   std::unique_ptr<GtkGui> _gui;
+   clap_id _timer = CLAP_INVALID_ID;
+#endif
 };
 
 } // namespace

@@ -32,7 +32,7 @@ Unicode true
 !endif
 
 !define NAME "YT Audio Browser"
-!define VERSION "0.1.0"
+!define VERSION "1.0.0"
 !define UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\YtAudioBrowser"
 ; The plugin reads ToolsDir from here to find yt-dlp when it is not in the default folder.
 !define APP_KEY "Software\YtAudioBrowser"

@@ -1,12 +1,12 @@
 # YT Audio Browser
 
-A Windows CLAP plugin that searches YouTube, SoundCloud, Bandcamp and more through
+A Windows and Linux CLAP plugin that searches YouTube, SoundCloud, Bandcamp and more through
 [yt-dlp](https://github.com/yt-dlp/yt-dlp), downloads audio in your chosen format, and lets you
 drag the files straight into your DAW.
 
 ## Download
 
-**[Get the latest release](../../releases/latest)** (currently 0.1.0, an early release).
+**[Get the latest release](../../releases/latest)** (currently 1.0.0).
 
 Pick one installer from the release page:
 
@@ -20,6 +20,23 @@ the plugin unchanged; it exists for its window.
 Requires Windows 10 or 11 (64-bit), a DAW that hosts CLAP plugins with embedded Windows GUIs,
 and an internet connection.
 
+### Linux (x86_64)
+
+Pick one from the release page:
+
+- `YtAudioBrowser-1.0.0-linux-x86_64.tar.gz`: extract it and run `./install.sh`. No root needed:
+  the plugin goes to `~/.clap` and yt-dlp, deno and (only if you have none) a static ffmpeg go to
+  `~/.local/share/YtAudioBrowser`. Options: `--plugin-dir DIR`, `--tools-dir DIR`, `--no-tools`,
+  `--offline-tools DIR`. Uninstall with `~/.local/share/YtAudioBrowser/uninstall.sh`.
+- `ytaudiobrowser_1.0.0_amd64.deb`: `sudo apt install ./ytaudiobrowser_1.0.0_amd64.deb` puts the
+  plugin in `/usr/lib/clap`; then run `ytaudiobrowser-setup` once as your own user to download the
+  tools.
+
+Needs GTK 3 and libcurl (present on most desktops), an X11 session (or XWayland), and a DAW that
+supports floating CLAP windows. On Linux the plugin opens as its own window, not inside the DAW's
+plugin slot. Downloads go to your `XDG_MUSIC_DIR` (usually `~/Music/YtAudioBrowser`), and settings to
+`~/.config/YtAudioBrowser/settings.ini`.
+
 ## Features
 
 - **Search nine sites at once:** YouTube, YouTube Music, SoundCloud, Bandcamp (tracks),
@@ -29,7 +46,7 @@ and an internet connection.
   download one after another into `Music\YtAudioBrowser`.
 - **Drag into your DAW** from the Downloads list, one file or many.
 - **Explorer-style lists:** Shift/Ctrl selection, Ctrl+A, Ctrl+C, Enter, Delete, right-click
-  menus (Copy link, Open in browser, Open, Delete to the Recycle Bin).
+  menus (Copy link, Open in browser, Open, Delete to the Recycle Bin / Trash).
 - **Click any column header to sort** ascending, descending, then back to default.
 - **Remembers** ticked sites, format, sort orders and column widths.
 - **Refresh** re-runs the last search, **Stop** cancels, **Update yt-dlp** fixes most
@@ -64,7 +81,8 @@ Apps & features; your downloaded audio is kept.
 
 - Early release: built and checked against sample data, but not yet tested across DAWs or every
   site. Expect rough edges.
-- Windows only. The window is embedded only and fixed size.
+- Windows: the window is embedded only and fixed size. Linux: the window floats, and the Linux
+  build has not been tried in a real DAW yet.
 - Dragging files out depends on your DAW. Some hosts do not accept a file drag from a plugin
   window, and some capture keystrokes so typing in the search box may not work. If a drag fails,
   use **Open folder** and drag from there.
@@ -116,3 +134,16 @@ installers as artifacts on every push.
 - Sites are defined in `sites()` in `src/search.cpp`. yt-dlp sites are a `<key>search` prefix or
   a search-page URL that yt-dlp has an extractor for (`yt-dlp --list-extractors`). Bandcamp,
   Mixcloud and Internet Archive have built-in providers in `src/providers.cpp`.
+
+### Linux build
+
+```bash
+sudo apt install cmake pkg-config libgtk-3-dev libcurl4-openssl-dev
+cmake -S . -B build-linux -DCMAKE_BUILD_TYPE=Release
+cmake --build build-linux -j
+scripts/linux/build-packages.sh        # dist/*.tar.gz and dist/*.deb
+```
+
+The plugin looks for `yt-dlp` in `[Paths] ToolsDir` of `settings.ini` (written by `install.sh` when
+you pick a custom folder), then `~/.local/share/YtAudioBrowser/bin`, a `tools` folder next to the
+`.clap`, then your `PATH`. ffmpeg comes from the same folder or your `PATH`.

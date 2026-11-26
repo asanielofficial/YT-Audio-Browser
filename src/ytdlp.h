@@ -1,5 +1,7 @@
 #pragma once
 
+#include "pathstr.h"
+
 #include <atomic>
 #include <functional>
 #include <string>
@@ -17,18 +19,18 @@ struct Hit {
 };
 
 struct Tools {
-   std::wstring dir;       // folder the tools were found in
-   std::wstring ytdlp;     // full path to yt-dlp.exe
-   std::wstring ffmpegDir; // folder holding ffmpeg.exe (empty if not found)
-   std::wstring deno;      // full path to deno.exe (empty if not found)
+   PathStr dir;       // folder the tools were found in
+   PathStr ytdlp;     // full path to yt-dlp
+   PathStr ffmpegDir; // folder holding ffmpeg (empty if not found)
+   PathStr deno;      // full path to deno (empty if not found)
 };
 
-// Looks for yt-dlp.exe in %LOCALAPPDATA%\YtAudioBrowser\bin, then next to the
-// .clap file. On failure `why` explains where to put it.
-bool locateTools(Tools &out, std::wstring &why);
+// Finds yt-dlp (see the platform's ytdlp source for the search order).
+// On failure `why` explains where to put it.
+bool locateTools(Tools &out, PathStr &why);
 
-// %USERPROFILE%\Music\YtAudioBrowser, created on demand.
-std::wstring downloadDir();
+// Where downloads go (Music\YtAudioBrowser), created on demand.
+PathStr downloadDir();
 
 // Runs one yt-dlp search (or lists a pasted URL). `target` is either
 // "ytsearch8:query" or a URL. At most `maxResults` hits are listed.
@@ -39,9 +41,9 @@ int searchOne(const Tools &t, const std::string &siteLabel, const std::string &t
 
 // Downloads `url` as audio in `format` (wav, flac, mp3, m4a, opus).
 // `outPath` receives the final file path on success.
-int downloadAudio(const Tools &t, const std::string &url, const std::wstring &format,
+int downloadAudio(const Tools &t, const std::string &url, const PathStr &format,
                   const std::atomic<bool> &cancel, const std::function<void(double)> &onProgress,
-                  std::wstring &outPath, std::string &lastError);
+                  PathStr &outPath, std::string &lastError);
 
 // yt-dlp -U, streaming its output.
 int updateYtDlp(const Tools &t, const std::atomic<bool> &cancel,

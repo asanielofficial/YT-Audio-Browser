@@ -49,7 +49,7 @@ bool httpGet(const std::string &url, const std::atomic<bool> &cancel, std::strin
                          std::wstring(uc.lpszExtraInfo, uc.dwExtraInfoLength);
    const bool secure = uc.nScheme == INTERNET_SCHEME_HTTPS;
 
-   Internet session(WinHttpOpen(L"Mozilla/5.0 (Windows NT 10.0; Win64; x64) YtAudioBrowser/0.1",
+   Internet session(WinHttpOpen(L"Mozilla/5.0 (Windows NT 10.0; Win64; x64) YtAudioBrowser/1.0",
                                 WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME,
                                 WINHTTP_NO_PROXY_BYPASS, 0));
    if (!session.h) {
