@@ -1,80 +1,149 @@
-# Samplite Explorer
+# YT Audio Browser
 
-A Windows 95-style browser for audio samples and synth presets, written in C++ with JUCE 8.
+A Windows and Linux CLAP plugin that searches YouTube, SoundCloud, Bandcamp and more through
+[yt-dlp](https://github.com/yt-dlp/yt-dlp), downloads audio in your chosen format, and lets you
+drag the files straight into your DAW.
 
-## Build
+## Download
 
-You need CMake 3.22+, Git and a C++17 compiler. The first configure downloads JUCE.
+**[Get the latest release](../../releases/latest)** (currently 1.0.0).
 
-- **Windows:** Visual Studio 2022 with "Desktop development with C++"
-- **macOS:** Xcode command line tools
-- **Linux:** `sudo apt install g++ cmake git pkg-config libasound2-dev libx11-dev libxext-dev libxinerama-dev libxrandr-dev libxcursor-dev libfreetype-dev libfontconfig1-dev libgl1-mesa-dev`
+Pick one installer from the release page:
 
-Then, in this folder:
+- `YtAudioBrowser-Setup-Slim.exe` is small and downloads yt-dlp, ffmpeg and deno (about 150 MB)
+  while installing.
+- `YtAudioBrowser-Setup.exe` has the tools bundled and installs offline.
 
-    cmake -B build -DCMAKE_BUILD_TYPE=Release
-    cmake --build build --config Release
+Then rescan plugins in your DAW and add **YT Audio Browser** to a track. Audio passes through
+the plugin unchanged; it exists for its window.
 
-The first configure also downloads QM-DSP. The app is under `build/SampliteExplorer_artefacts/`. Tests build as `ExplorerTests`.
+Requires Windows 10 or 11 (64-bit), a DAW that hosts CLAP plugins with embedded Windows GUIs,
+and an internet connection.
 
-## Build with GitHub Actions
+### Linux (x86_64)
 
-Put the contents of this folder at the root of a GitHub repository, including the hidden `.github` folder:
+Pick one from the release page:
 
-    git init -b main
-    git add .
-    git commit -m "Add Samplite Explorer"
-    git remote add origin https://github.com/YOUR-NAME/YOUR-REPO.git
-    git push -u origin main
+- `YtAudioBrowser-1.0.0-linux-x86_64.tar.gz`: extract it and run `./install.sh`. No root needed:
+  the plugin goes to `~/.clap` and yt-dlp, deno and (only if you have none) a static ffmpeg go to
+  `~/.local/share/YtAudioBrowser`. Options: `--plugin-dir DIR`, `--tools-dir DIR`, `--no-tools`,
+  `--offline-tools DIR`. Uninstall with `~/.local/share/YtAudioBrowser/uninstall.sh`.
+- `ytaudiobrowser_1.0.0_amd64.deb`: `sudo apt install ./ytaudiobrowser_1.0.0_amd64.deb` puts the
+  plugin in `/usr/lib/clap`; then run `ytaudiobrowser-setup` once as your own user to download the
+  tools.
 
-The **Build** workflow runs on every push and pull request, or by hand from the Actions tab.
-It builds and tests on Windows, macOS and Linux, creates an installer on each, and installs it as a check.
-Download from the **Artifacts** section of a finished run:
+Needs GTK 3 and libcurl (present on most desktops), an X11 session (or XWayland), and a DAW that
+supports floating CLAP windows. On Linux the plugin opens as its own window, not inside the DAW's
+plugin slot. Downloads go to your `XDG_MUSIC_DIR` (usually `~/Music/YtAudioBrowser`), and settings to
+`~/.config/YtAudioBrowser/settings.ini`.
 
-| Platform | Installer | Install with |
-|---|---|---|
-| Windows 10/11 x64 | `...-Windows-Setup.exe` | Run it |
-| macOS 11+ (Intel and Apple Silicon) | `...-macOS.pkg` | Open it; installs to Applications |
-| Debian / Ubuntu x64 | `samplite-explorer_..._amd64.deb` | `sudo apt install ./samplite-explorer_*.deb` |
+## Features
 
-The Linux package is built on Ubuntu 24.04 and needs that release or newer.
+- **Search nine sites at once:** YouTube, YouTube Music, SoundCloud, Bandcamp (tracks),
+  Mixcloud, Internet Archive, Dailymotion, Niconico and Bilibili. Paste any URL yt-dlp
+  supports to list or download it.
+- **Download as flac (default), wav, mp3, m4a or opus.** Select several results and they
+  download one after another into `Music\YtAudioBrowser`.
+- **Drag into your DAW** from the Downloads list, one file or many.
+- **Explorer-style lists:** Shift/Ctrl selection, Ctrl+A, Ctrl+C, Enter, Delete, right-click
+  menus (Copy link, Open in browser, Open, Delete to the Recycle Bin / Trash).
+- **Click any column header to sort** ascending, descending, then back to default.
+- **Remembers** ticked sites, format, sort orders and column widths.
+- **Refresh** re-runs the last search, **Stop** cancels, **Update yt-dlp** fixes most
+  "site stopped working" problems.
 
-The installers are not signed with a developer certificate, so Windows SmartScreen or macOS Gatekeeper
-may warn. On Windows choose More info > Run anyway; on macOS allow it under
-System Settings > Privacy & Security.
+## Using it
 
-To build an installer locally, build in `build/` first, then run `bash installer/linux.sh`,
-`bash installer/macos.sh`, or on Windows `ISCC /DAppVersion=1.2.0 installer\windows.iss`
-(needs [Inno Setup 6](https://jrsoftware.org/isinfo.php)). Output goes to `dist/`.
+1. Type a query and press Enter. YouTube and SoundCloud are ticked by default; tick more sites
+   as needed.
+2. Select one or more results and press **Download selected** (or double-click one).
+3. Drag the finished file from the Downloads list into your arrangement or sampler.
 
-## Use
+Right-click a result for **Copy link** and **Open in browser**. Right-click a download for
+**Open** (your default audio app) and **Delete**.
 
-- **Add Folder...** or drop a folder onto the window.
-- The left sidebar shows each added folder as a tree. Select a folder to see everything inside it,
-  including subfolders. Folders with no sounds or presets are left out.
-- Click or use the arrow keys to audition; **Space** plays and stops; click the waveform to seek.
-- Select as in Windows Explorer: **Shift** for a range, **Ctrl** (Cmd on macOS) to add or remove single
-  files, **Ctrl+Shift** to add a range, **Ctrl+A** for all.
-- Right-click for **Open**, **Open Containing Folder**, **Rename** and **Delete**. **Enter** opens,
-  **F2** renames, **Delete** moves to the Recycle Bin or Trash (after asking). On Linux the folder opens
-  without the file highlighted.
-- **Help > About** lists the supported file formats.
-- Drag a row out of the window into your DAW, synth or file manager. Files are copied or referenced, never moved.
-- Filter by text, type, BPM range and key. Click column headers to sort, including by tuning.
+## Installing
 
-## Notes
+No admin rights needed. The installer asks for two folders:
 
-- **BPM and key** come from the filename if present, otherwise from analysis. A `~` marks an estimate.
-  - Key: Queen Mary key detector (QM-DSP), using the detected tuning. Drums and noise are left blank.
-  - Tempo: files up to 30 s use onset autocorrelation; longer files use the Queen Mary beat tracker.
-  - Estimates can be wrong, including half or double tempo, and relative major/minor.
-- **Tuning** is the A4 reference in Hz (440, 432 and so on), from the filename (`432Hz`) or estimated.
-  Estimates cover about 428 to 453 Hz. Noisy or drum material is usually left blank.
-- **Presets** are listed with metadata only; they are not played (that would require hosting the synth).
-  - `.vital`: name, author, style
-  - `.fxp`: program name and plugin ID (Serum 1 is recognised)
-  - `.fxb`, `.vstpreset`: filename and plugin/class ID
-  - `.SerumPreset`: based on an assumed file layout; falls back to the filename
-- **Formats:** WAV, AIFF, FLAC, Ogg and MP3, plus whatever the operating system's codecs add.
-- Settings and the analysis cache live in a `SampliteExplorer` folder in your user application data.
-- Read `THIRD-PARTY.md` before distributing: QM-DSP is GPL and JUCE is AGPL or commercial.
+- **Tools folder** (default `%LOCALAPPDATA%\YtAudioBrowser`): yt-dlp, ffmpeg, deno and the
+  uninstaller. yt-dlp updates itself here, so pick a folder you can write to.
+- **Plugin folder** (default `%LOCALAPPDATA%\Programs\Common\CLAP`, which most DAWs already scan):
+  if you change it, add the new folder to your DAW's CLAP search paths.
+
+Reinstalling starts from the folders you chose last time. Silent install:
+`Setup.exe /S /PLUGINDIR=D:\Plugins\CLAP /D=D:\Tools\YtAudioBrowser` (`/D=` must be last).
+
+Close your DAW before reinstalling, since a loaded plugin file is locked. Uninstall from
+Apps & features; your downloaded audio is kept.
+
+## Known limitations
+
+- Early release: built and checked against sample data, but not yet tested across DAWs or every
+  site. Expect rough edges.
+- Windows: the window is embedded only and fixed size. Linux: the window floats, and the Linux
+  build has not been tried in a real DAW yet.
+- Dragging files out depends on your DAW. Some hosts do not accept a file drag from a plugin
+  window, and some capture keystrokes so typing in the search box may not work. If a drag fails,
+  use **Open folder** and drag from there.
+- Bandcamp search reads Bandcamp's web page, so it breaks when the layout changes. If a site
+  fails, the status line names it and the others keep working.
+- Internet Archive items with several files download only the first file.
+- No preview before download and no search filters beyond sorting.
+- Spotify, Apple Music and Deezer are not supported: yt-dlp cannot search them and their audio
+  is DRM-protected.
+- Sites change often. If downloads start failing, press **Update yt-dlp** first.
+
+## Legal
+
+You are responsible for having the right to download and use what you fetch. Many sites restrict
+downloading in their terms, and most music is copyrighted. Internet Archive and Creative Commons
+material is the safest source for anything you plan to release.
+
+The installer includes yt-dlp (Unlicense), an LGPL build of ffmpeg and deno (MIT), each under its
+own license. Check them before redistributing the plugin with the tools included.
+
+## Building from source
+
+Needs Visual Studio 2022 (or any C++17 compiler) and CMake 3.20+. CLAP headers and clap-helpers
+are fetched by CMake.
+
+```powershell
+cmake -S . -B build -A x64
+cmake --build build --config Release
+.\scripts\install.ps1          # copies the plugin to your CLAP folder and fetches the tools
+```
+
+To build the installers, install NSIS (`winget install NSIS.NSIS`) and run:
+
+```powershell
+.\scripts\build-installer.ps1          # dist\YtAudioBrowser-Setup.exe (tools bundled)
+.\scripts\build-installer.ps1 -Slim    # dist\YtAudioBrowser-Setup-Slim.exe
+```
+
+`.github/workflows/build.yml` does the same on a Windows runner and uploads the plugin and both
+installers as artifacts on every push.
+
+### How it works
+
+- The plugin looks for `yt-dlp.exe` in the folder the installer recorded under
+  `HKCU\Software\YtAudioBrowser\ToolsDir`, then `%LOCALAPPDATA%\YtAudioBrowser\bin`, then a
+  `tools` folder next to the `.clap`. `scripts\fetch-tools.ps1` downloads the tools.
+- YouTube needs yt-dlp plus a JavaScript runtime (deno).
+- Settings live in `%LOCALAPPDATA%\YtAudioBrowser\settings.ini`.
+- Sites are defined in `sites()` in `src/search.cpp`. yt-dlp sites are a `<key>search` prefix or
+  a search-page URL that yt-dlp has an extractor for (`yt-dlp --list-extractors`). Bandcamp,
+  Mixcloud and Internet Archive have built-in providers in `src/providers.cpp`.
+
+### Linux build
+
+```bash
+sudo apt install cmake pkg-config libgtk-3-dev libcurl4-openssl-dev
+cmake -S . -B build-linux -DCMAKE_BUILD_TYPE=Release
+cmake --build build-linux -j
+scripts/linux/build-packages.sh        # dist/*.tar.gz and dist/*.deb
+```
+
+The plugin looks for `yt-dlp` in `[Paths] ToolsDir` of `settings.ini` (written by `install.sh` when
+you pick a custom folder), then `~/.local/share/YtAudioBrowser/bin`, a `tools` folder next to the
+`.clap`, then your `PATH`. ffmpeg comes from the same folder or your `PATH`.
