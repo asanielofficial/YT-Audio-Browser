@@ -51,7 +51,7 @@ jobs:
           cmake --build build-linux -j
 
       - name: Package (tar.gz and .deb)
-        run: scripts/linux/build-packages.sh
+        run: bash scripts/linux/build-packages.sh
 
       - uses: actions/upload-artifact@v4
         with:
